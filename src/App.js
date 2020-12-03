@@ -1,55 +1,34 @@
 import React, { useState, useEffect } from "react";
 import Web3 from "web3";
-import detectEthereumProvider from "@metamask/detect-provider";
 import dataTokenABI from "./abi/dataTokenABI";
 import poolABI from "./abi/poolABI";
+import { waitTransaction, isSuccessfulTransaction } from "./ethereum"
 import "./App.css";
 
 function App() {
   const [tokensToMint, setTokensToMint] = useState(0);
+  const [datatokenAddress, setDatatokenAddress] = useState("0x1C68Cac32A422856C5566aEE051D2Fc06d24C96F")
+  const [poolAddress, setPoolAddress] = useState("0xC4b9A1cCeedE1401723993305C744C9c195dC4E4")
   const [expectedPrice, setExpectedPrice] = useState(1);
-  const [chainId, setChainId] = useState(4);
+  const [chainId, setChainId] = useState(0);
   const [account, setAccount] = useState(null);
-  const [web3, setWeb3] = useState(null);
 
   useEffect(() => {
-    /* async function injectProvider() {
-      const provider = await detectEthereumProvider();
-      if (provider) {
-        console.log("provider");
-        console.log(provider);
-        setWeb3(new Web3(provider));
-      } else {
-        alert("Please install Metamask");
-      }
-      console.log("web3");
-      console.log(web3);
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts"
-      });
-
-      //set current chainId
-      setChainId(window.ethereum.chainId);
-
-      //set current account
-      setAccount(accounts[0]);
-
-      //handle Network changed
-      window.ethereum.on("chainChanged", handleNetworkChanged);
-
-      //handle Account changed
-      window.ethereum.on("accountsChanged", handleAccountsChanged);
-    }
-
-    //inject Metamask
-    injectProvider(); */
-
     async function loadWeb3() {
       if (window.ethereum) {
+
         window.web3 = new Web3(window.ethereum);
         await window.ethereum.enable();
         const accounts = await window.web3.eth.getAccounts();
-        console.log(accounts);
+
+        //set Account
+        setAccount(accounts[0])
+        //set chainId
+        setChainId(window.web3.utils.hexToNumber(window.ethereum.chainId));
+
+        // event handler
+        window.ethereum.on("accountsChanged", handleAccountsChanged)
+        window.ethereum.on("chainChanged", handleNetworkChanged)
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
       } else {
@@ -62,10 +41,9 @@ function App() {
     loadWeb3();
   }, []);
 
-  function handleNetworkChanged() {
-    window.location.reload();
-    setChainId(window.ethereum.chainId);
-    alert("Chain Id - ", window.ethereum.chainId);
+  function handleNetworkChanged(id) {
+    setChainId(window.web3.utils.hexToNumber(id));
+    console.log("Chain Id changed to - ", chainId);
   }
 
   function handleAccountsChanged(accounts) {
@@ -74,35 +52,33 @@ function App() {
       alert("Please connect to MetaMask.");
     } else if (accounts[0] !== account) {
       setAccount(accounts[0]);
-      alert("Account - ", accounts[0]);
+      console.log("Account Changed to - ", account);
     }
   }
 
-  async function mintDatatokens(dtAddress, poolAddress, expectedSpotprice) {
-    //calculate pricing
-    //let price = web3.utils.toWei(newPrice, "ether")
-    const dtInstance = new web3.eth.Contract(dataTokenABI, dtAddress);
+  async function calculateDatatokensToMint(dtAddress, poolAddress, expectedSpotprice) {
 
-    const poolInstance = new web3.eth.Contract(poolABI, poolAddress);
+    console.log("pooll address - ", process.env.REACT_APP_OCEAN_ADDRESS)
+    const poolInstance = new window.web3.eth.Contract(poolABI, poolAddress);
     let oceanInPoolInWei = await poolInstance.methods
       .getBalance(process.env.REACT_APP_OCEAN_ADDRESS)
       .call();
-    let oceanInPoolInETH = web3.utils.fromWei(oceanInPoolInWei, "ether");
+    let oceanInPoolInETH = window.web3.utils.fromWei(oceanInPoolInWei, "ether");
     let weightOfOceanInWei = await poolInstance.methods
       .getNormalizedWeight(process.env.REACT_APP_OCEAN_ADDRESS)
       .call();
-    let weightOfOceanInETH = web3.utils.fromWei(weightOfOceanInWei, "ether");
+    let weightOfOceanInETH = window.web3.utils.fromWei(weightOfOceanInWei, "ether");
 
     let weightOfDatatokenInWei = await poolInstance.methods
       .getNormalizedWeight(dtAddress)
       .call();
-    let weightOfDatatokenInETH = web3.utils.fromWei(
+    let weightOfDatatokenInETH = window.web3.utils.fromWei(
       weightOfDatatokenInWei,
       "ether"
     );
 
     let swapFeeInWei = await poolInstance.methods.getSwapFee().call();
-    let swapFeeInETH = web3.utils.fromWei(swapFeeInWei, "ether");
+    let swapFeeInETH = window.web3.utils.fromWei(swapFeeInWei, "ether");
 
     //calculations
 
@@ -127,42 +103,118 @@ function App() {
     );
     const datatokensToMintInETH =
       swapFeeRatio * oceanTokenRatio * datatokenRatio;
-    const datatokensToMintInWei = web3.utils.toWei(
+
+
+    console.log("dt to mint - ", datatokensToMintInETH);
+    setTokensToMint(datatokensToMintInETH);
+    return datatokensToMintInETH;
+  }
+
+  async function mintDatatokens(dtAddress, poolAddress, datatokensToMintInETH) {
+
+    console.log("minterAccount - " + account)
+    const datatokensToMintInWei = window.web3.utils.toWei(
       String(datatokensToMintInETH),
       "ether"
     );
 
-    alert("dt to mint - ", datatokensToMintInETH);
-    setTokensToMint(datatokensToMintInETH);
-    const accounts = await window.ethereum.enable();
-    const account = accounts[0];
-    let gas = await dtInstance.methods
-      .mint(poolAddress, datatokensToMintInWei)
-      .estimateGas();
+    const dtInstance = new window.web3.eth.Contract(dataTokenABI, dtAddress);
 
-    const result = await dtInstance.methods
+    /*let gas = await dtInstance.methods
       .mint(poolAddress, datatokensToMintInWei)
-      .send({
-        from: account,
-        gas
-      });
+      .estimateGas(); */
+
+    const data = await dtInstance.methods
+      .mint(poolAddress, datatokensToMintInWei).encodeABI()
+
+    const transactionParameters = {
+      gas: window.web3.utils.numberToHex('100000'), // customizable by user during MetaMask confirmation.
+      to: datatokenAddress, // Required except during contract publications.
+      from: window.ethereum.selectedAddress, // must match user's active address.
+      value: '0x00', // Only required to send ether to the recipient from the initiating external account.
+      data, // Optional, but used for defining smart contract creation and interaction.
+      chainId
+    };
+
+    // txHash is a hex string
+    // As with any RPC call, it may throw an error
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [transactionParameters],
+    });
+
+    console.log("Txhash - " + txHash)
+    return txHash;
+  }
+
+
+  async function gulpDatatokensIntoPool(dtAddress, poolAddress) {
+    const poolInstance = new window.web3.eth.Contract(poolABI, poolAddress);
+    const data = await poolInstance.methods.gulp(dtAddress).encodeABI()
+
+    const transactionParameters = {
+      gas: window.web3.utils.numberToHex('100000'), // customizable by user during MetaMask confirmation.
+      to: poolAddress, // Required except during contract publications.
+      from: window.ethereum.selectedAddress, // must match user's active address.
+      value: '0x00', // Only required to send ether to the recipient from the initiating external account.
+      data, // Optional, but used for defining smart contract creation and interaction.
+      chainId
+    };
+
+    // txHash is a hex string
+    // As with any RPC call, it may throw an error
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [transactionParameters],
+    });
+
+    console.log("Txhash - " + txHash)
+    return txHash;
+
   }
 
   async function handleSubmit(e) {
-    e.preventDefault();
+    e.preventDefault()
+    console.log("Pool - ", poolAddress)
+    console.log("Datatoken - ", datatokenAddress)
 
-    setExpectedPrice(e.target.value);
+    try {
+      //calculate datatokens needed to minted
+      let tokensToMint = await calculateDatatokensToMint(datatokenAddress, poolAddress, expectedPrice)
+      console.log(` >> We need to mint ${tokensToMint} datatokens to bring price of datatoken to ${expectedPrice} <<`)
 
-    /*mintDatatokens(
-      "0xC1e2dcCC25ed82AcF79e233780c0f613B1229F82",
-      "0x58d65bB61BDD4df764A4Fba87d23D628a8a79b89",
-      expectedPrice
-    );*/
+      //mint datatokens
+      alert("Going to send mint tx")
+      let mintTxHash = await mintDatatokens(
+        datatokenAddress,
+        poolAddress,
+        tokensToMint
+      );
+
+      let mintReceipt = await waitTransaction(window.web3, mintTxHash, null)
+      console.log("mint Receipt - " + mintReceipt)
+      if (isSuccessfulTransaction(mintReceipt)) {
+        alert("Mint tx successfully minted")
+      }
+
+      //gulp minted tokens
+      alert("Going to send gulp tx")
+      let gulpTxHash = await gulpDatatokensIntoPool(datatokenAddress, poolAddress);
+      let gulpReceipt = await waitTransaction(window.web3, gulpTxHash, null)
+      console.log("gulp Receipt - " + gulpReceipt)
+      if (isSuccessfulTransaction(gulpReceipt)) {
+        alert("Gulp tx successfully minted")
+      }
+    } catch (err) {
+      console.error(err.message)
+    }
   }
   return (
     <div className="App">
       <header className="App-header">
         <form>
+          <span>Chain Id - {chainId}</span>{"  "}
+          <span>Account - {account}</span>
           <p>Set Expected Price to rebase the Pool</p>
           <input
             type="text"
@@ -170,8 +222,20 @@ function App() {
             onChange={e => setExpectedPrice(e.target.value)}
             placeholder="expected Spot Price"
           />
+          <input
+            type="text"
+            value={datatokenAddress}
+            onChange={e => setDatatokenAddress(e.target.value)}
+            placeholder="datatoken Address"
+          />
+          <input
+            type="text"
+            value={poolAddress}
+            onChange={e => setPoolAddress(e.target.value)}
+            placeholder="pool Address"
+          />
           <br />
-          <button type="submit" onClick={handleSubmit}>
+          <button onClick={handleSubmit}>
             Submit
           </button>
         </form>
