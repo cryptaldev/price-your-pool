@@ -1,0 +1,56 @@
+@import '../styles/variables';
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    width: parent;
+    padding: 10px;
+    border: 1px solid #e1e1e1;
+    box-shadow: 0 5px 18px 0 rgba(0, 0, 0, 0.1);
+}
+.logoContainer {
+    flex: 1;
+    text-align: right;
+}
+.textContainer {
+    flex: 2;
+    text-align: left;
+    max-width: 200px;
+}
+.titleContainer {
+    padding-top: 10px;
+}
+.title {
+    font-weight: 400;
+    font-size: 15px;
+    font-weight: 600;
+    color: #07333a;
+}
+.description {
+    font-weight: 300;
+    font-size: 14px;
+    color: #000;
+    text-overflow: clip;
+}
+.metadata {
+    font-size: 14px;
+    font-weight: 300;
+    color: #000;
+}
+hr {
+    margin: 0;
+    padding: 5px;
+}
+br {
+    margin: 0px;
+}
+a {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+a:hover {
+    color: #7b1173;
+}

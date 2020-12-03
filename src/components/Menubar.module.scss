@@ -1,0 +1,91 @@
+@import '../styles/variables';
+
+.menuIcon {
+    margin-top: $spacer/2;
+    margin-right: $spacer/3;
+}
+
+.menubar {
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+.menubarOverlay {
+    display: none;
+    margin-top: $spacer/3;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    max-width: 0;
+    max-height: 0;
+}
+
+.menubarInner {
+    overflow-y: none;
+    overflow-x: none;
+    width: 150px;
+    max-height: 320px;
+}
+
+.menubarOuter {
+    border: 1px solid $brand-purple;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    max-width: 150px;
+    max-height: 320px;
+}
+
+.searchIcon {
+    width: 30px;
+    height: 30px;
+    margin: 10px;
+    color: $brand-purple;
+}
+
+.walletIcon {
+    width: 30px;
+    height: 30px;
+    margin: 10px;
+    color: $brand-pink;
+}
+
+.settingsIcon {
+    width: 30px;
+    height: 30px;
+    margin: 10px;
+    color: $brand-violet;
+}
+
+.iconContainer {
+    margin-bottom: 30px;
+}
+
+.menuContainer {
+    margin: 0 auto;
+}
+.menuList {
+    list-style-type: none;
+    max-height: 300px;
+    overflow-y: hidden;
+}
+
+ul {
+    padding-inline-start: 0px;
+}
+.menuItem {
+    border-bottom: 2px solid rgba($brand-grey-light, 0.3);
+    padding: 15px;
+    max-height: 100px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+        background: $body-background;
+    }
+
+    &:active {
+        background: $body-background;
+        transform: scale(0.98);
+        /* Scaling button to 0.98 to its original size */
+        box-shadow: 3px 2px 22px 1px rgba(0, 0, 0, 0.24);
+        /* Lowering the shadow */
+    }
+}
