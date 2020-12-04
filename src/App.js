@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Web3 from "web3";
+import Form from "./components/Form/Form"
+import Input from "./components/Form/Input"
+import Button from "./components/Form/Button"
+import Label from "./components/Form/Label"
 import dataTokenABI from "./abi/dataTokenABI";
 import poolABI from "./abi/poolABI";
 import { waitTransaction, isSuccessfulTransaction } from "./ethereum"
@@ -212,33 +216,34 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <form>
-          <span>Chain Id - {chainId}</span>{"  "}
-          <span>Account - {account}</span>
+        <img className="App-logo" src={process.env.PUBLIC_URL + '/favicon.ico'} />
+        <Form>
+          <h6>Chain Id - {chainId}</h6>{"  "}
+          <h6>Account - {account}</h6>
           <p>Set Expected Price to rebase the Pool</p>
-          <input
+          <Input
             type="text"
             value={expectedPrice}
             onChange={e => setExpectedPrice(e.target.value)}
             placeholder="expected Spot Price"
           />
-          <input
+          <Input
             type="text"
             value={datatokenAddress}
             onChange={e => setDatatokenAddress(e.target.value)}
             placeholder="datatoken Address"
           />
-          <input
+          <Input
             type="text"
             value={poolAddress}
             onChange={e => setPoolAddress(e.target.value)}
             placeholder="pool Address"
           />
           <br />
-          <button onClick={handleSubmit}>
-            Submit
-          </button>
-        </form>
+          <Button onClick={handleSubmit}>
+            Rebase Pool
+          </Button>
+        </Form>
       </header>
     </div>
   );
