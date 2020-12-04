@@ -1,22 +1,22 @@
-@import '../../styles/variables';
+@import "../../styles/variables";
 
 .label {
-    color: $brand-grey;
-    font-size: $font-size-base;
-    font-family: $font-family-title;
-    line-height: 1.2;
-    display: block;
-    margin-bottom: $spacer / 6;
+  color: $brand-primary;
+  font-size: $font-size-base;
+  font-family: $font-family-title;
+  line-height: 1.2;
+  display: block;
+  margin-bottom: $spacer / 6;
 }
 
 .required {
-    composes: label;
+  composes: label;
 
-    &:after {
-        content: '*';
-        font-size: $font-size-base;
-        color: $brand-grey-light;
-        display: inline-block;
-        margin-left: .1rem;
-    }
+  &:after {
+    content: "*";
+    font-size: $font-size-base;
+    color: $brand-secondary;
+    display: inline-block;
+    margin-left: 0.1rem;
+  }
 }

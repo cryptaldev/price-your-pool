@@ -1,19 +1,17 @@
-import React, { PureComponent } from 'react'
-import { ReactComponent as Logo } from '@oceanprotocol/art/logo/logo-white.svg'
-import styles from './Header.module.scss'
+import React, { PureComponent } from "react";
+import styles from "./Header.module.scss";
+import Button from "./Form/Button";
 
-export default class Header extends PureComponent {
-    constructor(props) {
-        super(props)
-        this.state = {}
-    }
-
-    render() {
-        return (
-            <header className={styles.appHeader}>
-                <Logo />
-                <h3 className={styles.topLinks}>Data Wallet</h3>
-            </header>
-        )
-    }
+export default function Header({ account }) {
+  return (
+    <header className={styles.appHeader}>
+      <div className={styles.logoContainer}>
+        <img src={process.env.PUBLIC_URL + "/favicon.ico"} />
+        <h3 className={styles.topLinks}>Stable Pools</h3>
+      </div>
+      <div className={styles.walletContainer}>
+        {account ? <p>{account}</p> : <Button>Connect</Button>}
+      </div>
+    </header>
+  );
 }
