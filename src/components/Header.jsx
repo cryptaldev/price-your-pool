@@ -7,7 +7,7 @@ export default function Header({ account }) {
     <header className={styles.appHeader}>
       <div className={styles.logoContainer}>
         <img src={process.env.PUBLIC_URL + "/favicon.ico"} />
-        <h3 className={styles.topLinks}>Stable Pools</h3>
+        <h3 className={styles.topLinks}>Stable Price</h3>
       </div>
       <div className={styles.walletContainer}>
         {account ? <p>{account}</p> : <Button>Connect</Button>}

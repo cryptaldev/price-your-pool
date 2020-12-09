@@ -22,25 +22,25 @@ export default function SmartInput({
             placeholder={placeholder}
           />
           {error ? <p className={styles.error}>{error}</p> : ""}
-        </div>
-        <div className={styles.info}>
-          {infoKeypair && Object.keys(infoKeypair).length ? (
-            <table className={styles.table}>
-              <tbody>
-                {Object.keys(infoKeypair).map(key => (
-                  <tr>
-                    <td>
-                      {key}
-                      {"  "}:
-                    </td>
-                    <td>{infoKeypair[key]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            ""
-          )}
+          <div className={styles.info}>
+            {infoKeypair && Object.keys(infoKeypair).length ? (
+              <table className={styles.table}>
+                <tbody>
+                  {Object.keys(infoKeypair).map(key => (
+                    <tr>
+                      <td>
+                        {key}
+                        {"  "}:
+                      </td>
+                      <td>{infoKeypair[key]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              ""
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -13,12 +13,9 @@ import styles from "./App.module.scss";
 
 function App() {
   const [tokensToMint, setTokensToMint] = useState(0);
-  const [datatokenInfo, setDatatokenInfo] = useState({
-    name: "-",
-    symbol: "-",
-    cap: "-",
-    minter: "-"
-  });
+  const [error, setError] = useState({});
+  const [datatokenInfo, setDatatokenInfo] = useState(null);
+  const [poolInfo, setPoolInfo] = useState(null);
   const [datatokenAddress, setDatatokenAddress] = useState(
     "0x1f685116a42f392f291a78eD6175B41B7E326843"
   );
@@ -72,17 +69,42 @@ function App() {
   }
 
   async function getDatatokenInfo(dtAddress) {
-    console.log(dtAddress);
-    const dtInstance = new window.web3.eth.Contract(dataTokenABI, dtAddress);
-    let symbol = await dtInstance.methods.symbol().call();
-    let name = await dtInstance.methods.name().call();
-    let cap = window.web3.utils.fromWei(
-      await dtInstance.methods.cap().call(),
-      "ether"
-    );
-    let minter = await dtInstance.methods.minter().call();
-    console.log({ name, symbol, cap, minter });
-    return { name, symbol, cap, minter };
+    try {
+      const dtInstance = new window.web3.eth.Contract(dataTokenABI, dtAddress);
+      console.log(dtInstance);
+      let symbol = await dtInstance.methods.symbol().call();
+      let name = await dtInstance.methods.name().call();
+      let cap = window.web3.utils.fromWei(
+        await dtInstance.methods.cap().call(),
+        "ether"
+      );
+      let minter = await dtInstance.methods.minter().call();
+      console.log({ name, symbol, cap, minter });
+      return { name, symbol, cap, minter };
+    } catch (err) {
+      console.error(err.message);
+      return err;
+    }
+  }
+
+  async function getPoolInfo(poolAddress, dtAddress) {
+    const poolInstance = new window.web3.eth.Contract(poolABI, poolAddress);
+    const oceanInWei = await poolInstance.methods
+      .getBalance(process.env.REACT_APP_OCEAN_ADDRESS)
+      .call();
+    const oceanInETH = window.web3.utils.fromWei(oceanInWei, "ether");
+    const OCEAN = Number(oceanInETH).toFixed(2);
+    const datatokenInWei = await poolInstance.methods
+      .getBalance(dtAddress)
+      .call();
+    const datatokenInETH = window.web3.utils.fromWei(datatokenInWei, "ether");
+    const Datatoken = Number(datatokenInETH).toFixed(2);
+    const priceInWei = await poolInstance.methods
+      .getSpotPrice(process.env.REACT_APP_OCEAN_ADDRESS, dtAddress)
+      .call();
+    const priceInETH = window.web3.utils.fromWei(priceInWei, "ether");
+    const Price = Number(priceInETH).toFixed(2);
+    return { OCEAN, Datatoken, Price };
   }
 
   async function calculateDatatokensToMint(
@@ -205,11 +227,17 @@ function App() {
     return txHash;
   }
 
+  async function handleCalculations(value) {
+    try {
+    } catch (err) {
+      console.error(err);
+    }
+  }
   async function handleSubmit(e) {
     e.preventDefault();
     console.log("Pool - ", poolAddress);
     console.log("Datatoken - ", datatokenAddress);
-
+    setError({ calculations: "" });
     try {
       //calculate datatokens needed to minted
       let tokensToMint = await calculateDatatokensToMint(
@@ -220,9 +248,19 @@ function App() {
       console.log(
         ` >> We need to mint ${tokensToMint} datatokens to bring price of datatoken to ${expectedPrice} <<`
       );
+      setTokensToMint(tokensToMint);
 
+      if (tokensToMint) {
+        if (tokensToMint > datatokenInfo.cap - poolInfo.Datatoken) {
+          setError({
+            calculations: `Tokens needed to mint (${tokensToMint}) exceeds max mintable datatokens (${datatokenInfo.cap -
+              poolInfo.Datatoken})`
+          });
+          return;
+        }
+      }
       //mint datatokens
-      alert("Going to send mint tx");
+      alert(`Going to mint ${tokensToMint}`);
       let mintTxHash = await mintDatatokens(
         datatokenAddress,
         poolAddress,
@@ -253,10 +291,32 @@ function App() {
 
   async function handleDatatokenAddressChange(value) {
     setDatatokenAddress(value);
+    setDatatokenInfo(null);
     if (window.web3.utils.isAddress(value)) {
-      setDatatokenInfo(await getDatatokenInfo(value));
+      let info = await getDatatokenInfo(value);
+      console.log();
+      setDatatokenInfo(info);
+      if (!info) {
+        setError({ datatoken: "Datatoken not found" });
+      } else {
+        setError({ datatoken: "" });
+      }
     }
   }
+
+  async function handlePoolAddressChange(value) {
+    setPoolAddress(value);
+    if (window.web3.utils.isAddress(value)) {
+      console.log("Pool address - ", value);
+      setPoolInfo(await getPoolInfo(value, datatokenAddress));
+    }
+    if (!poolInfo) {
+      setError({ pool: "Pool not found" });
+    } else {
+      setError({ pool: "" });
+    }
+  }
+
   return (
     <div className={styles.app}>
       <Header account={account} />
@@ -269,18 +329,22 @@ function App() {
             setValue={handleDatatokenAddressChange}
             placeholder="0x......"
             infoKeypair={datatokenInfo}
+            error={datatokenInfo ? "" : error.datatoken}
           />
           <SmartInput
             label="Pool Address"
             value={poolAddress}
-            setValue={setPoolAddress}
+            setValue={handlePoolAddressChange}
             placeholder="0x......"
+            infoKeypair={poolInfo}
+            error={poolInfo ? "" : error.pool}
           />
           <SmartInput
-            label="Expected price"
+            label="Expected price (in OCEAN)"
             value={expectedPrice}
             setValue={setExpectedPrice}
-            placeholder="datatoken address"
+            placeholder="10"
+            error={error.calculations}
           />
           <br />
           <Button onClick={handleSubmit}>Rebase Pool</Button>
