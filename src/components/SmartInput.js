@@ -8,7 +8,8 @@ export default function SmartInput({
   setValue,
   placeholder,
   infoKeypair,
-  error
+  error,
+  disabled
 }) {
   return (
     <div className={styles.smartContainer}>
@@ -17,6 +18,7 @@ export default function SmartInput({
         <div className={styles.smartInput}>
           <Input
             type="text"
+            disabled={disabled}
             value={value}
             onChange={e => setValue(e.target.value)}
             placeholder={placeholder}

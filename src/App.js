@@ -1,30 +1,35 @@
 import React, { useState, useEffect } from "react";
 import Web3 from "web3";
 import Form from "./components/Form/Form";
+import Loader from "react-loader-spinner";
+import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import Input from "./components/Form/Input";
 import SmartInput from "./components/SmartInput";
 import Button from "./components/Form/Button";
 import Header from "./components/Header";
-import Label from "./components/Form/Label";
 import dataTokenABI from "./abi/dataTokenABI";
 import poolABI from "./abi/poolABI";
 import { waitTransaction, isSuccessfulTransaction } from "./ethereum";
+import Modal from "./components/Modal"
 import styles from "./App.module.scss";
 
 function App() {
+  const [showModal, setShowModal] = useState(false)
   const [tokensToMint, setTokensToMint] = useState(0);
   const [error, setError] = useState({});
   const [datatokenInfo, setDatatokenInfo] = useState(null);
   const [poolInfo, setPoolInfo] = useState(null);
   const [datatokenAddress, setDatatokenAddress] = useState(
-    "0x1f685116a42f392f291a78eD6175B41B7E326843"
+    ""
   );
   const [poolAddress, setPoolAddress] = useState(
-    "0x0da1004CE58464c9a62bEEa4CE4F2951A2103cB2"
+    ""
   );
-  const [expectedPrice, setExpectedPrice] = useState(1);
+  const [disabled, setDisabled] = useState({datatoken: false, pool: true, price: true})
+  const [expectedPrice, setExpectedPrice] = useState("");
   const [chainId, setChainId] = useState(0);
   const [account, setAccount] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     async function loadWeb3() {
@@ -158,9 +163,10 @@ function App() {
       "Data Token To Mint - ",
       swapFeeRatio * oceanTokenRatio * datatokenRatio
     );
-    const datatokensToMintInETH =
+    const totalExpectedDatatokenBalance =
       swapFeeRatio * oceanTokenRatio * datatokenRatio;
 
+    const datatokensToMintInETH = totalExpectedDatatokenBalance - poolInfo.Datatoken
     console.log("dt to mint - ", datatokensToMintInETH);
     setTokensToMint(datatokensToMintInETH);
     return datatokensToMintInETH;
@@ -227,12 +233,6 @@ function App() {
     return txHash;
   }
 
-  async function handleCalculations(value) {
-    try {
-    } catch (err) {
-      console.error(err);
-    }
-  }
   async function handleSubmit(e) {
     e.preventDefault();
     console.log("Pool - ", poolAddress);
@@ -267,12 +267,15 @@ function App() {
         tokensToMint
       );
 
+      //display loader
+      setIsLoading(true);
+
       let mintReceipt = await waitTransaction(window.web3, mintTxHash, null);
       console.log("mint Receipt - " + mintReceipt);
       if (isSuccessfulTransaction(mintReceipt)) {
-        alert("Mint tx successfully minted");
-      }
+        alert("Mint tx successfully minted");   //hide loader
 
+      }
       //gulp minted tokens
       alert("Going to send gulp tx");
       let gulpTxHash = await gulpDatatokensIntoPool(
@@ -282,8 +285,13 @@ function App() {
       let gulpReceipt = await waitTransaction(window.web3, gulpTxHash, null);
       console.log("gulp Receipt - " + gulpReceipt);
       if (isSuccessfulTransaction(gulpReceipt)) {
-        alert("Gulp tx successfully minted");
+        alert("Gulp tx successfully minted");       
+        setIsLoading(false);
+        setPoolInfo(await getPoolInfo(poolAddress, datatokenAddress));
       }
+
+   
+
     } catch (err) {
       console.error(err.message);
     }
@@ -294,32 +302,54 @@ function App() {
     setDatatokenInfo(null);
     if (window.web3.utils.isAddress(value)) {
       let info = await getDatatokenInfo(value);
-      console.log();
-      setDatatokenInfo(info);
       if (!info) {
         setError({ datatoken: "Datatoken not found" });
-      } else {
-        setError({ datatoken: "" });
+      } else if (info.minter !== account){
+        console.error("You are not the minter")
+        setError({ datatoken: "You are not the minter"})
       }
+      else {
+        setError({ datatoken: "" });
+        setDatatokenInfo(info);
+        setDisabled({...disabled, pool: false})
+      }
+    } else {
+      setError({ datatoken: "Incorrect Datatoken address" });
     }
   }
 
   async function handlePoolAddressChange(value) {
     setPoolAddress(value);
     if (window.web3.utils.isAddress(value)) {
-      console.log("Pool address - ", value);
-      setPoolInfo(await getPoolInfo(value, datatokenAddress));
-    }
-    if (!poolInfo) {
-      setError({ pool: "Pool not found" });
+      let info = await getPoolInfo(value, datatokenAddress)
+      if (!info) {
+        setError({ pool: "Pool not found" });
+      } else {
+        setError({ pool: "" });
+        setPoolInfo(info);
+        setDisabled({...disabled, price: false})
+      }
     } else {
-      setError({ pool: "" });
+      setError({ datatoken: "Incorrect Datatoken address" });
     }
+    
   }
 
+  function renderLoader(){
+    return (
+      <Loader
+        type="ThreeDots"
+        color="#00BFFF"
+        height={100}
+        width={100}
+      />
+    );
+
+  }
   return (
     <div className={styles.app}>
-      <Header account={account} />
+      <Header account={account} modal={setShowModal}/>
+      <Modal className={styles.modal} open={showModal} setClose={() => setShowModal(false)}/>
       <div className={styles.appContainer}>
         <Form>
           <p>Set Expected Price to rebase the Pool</p>
@@ -330,6 +360,7 @@ function App() {
             placeholder="0x......"
             infoKeypair={datatokenInfo}
             error={datatokenInfo ? "" : error.datatoken}
+            disabled={disabled.datatoken}
           />
           <SmartInput
             label="Pool Address"
@@ -338,6 +369,7 @@ function App() {
             placeholder="0x......"
             infoKeypair={poolInfo}
             error={poolInfo ? "" : error.pool}
+            disabled={disabled.pool}
           />
           <SmartInput
             label="Expected price (in OCEAN)"
@@ -345,9 +377,11 @@ function App() {
             setValue={setExpectedPrice}
             placeholder="10"
             error={error.calculations}
+            disabled={disabled.price}
           />
           <br />
           <Button onClick={handleSubmit}>Rebase Pool</Button>
+          {isLoading ?  renderLoader() : ""}
         </Form>
       </div>
     </div>

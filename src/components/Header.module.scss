@@ -20,8 +20,8 @@
   }
 
   img {
-    width: 60px;
-    height: 60px;
+    width: 100px;
+    height: 100px;
     margin-top: -($spacer / 4);
 
     @media (min-width: $break-point--medium) {
@@ -30,6 +30,7 @@
     }
   }
 }
+
 
 .logoContainer {
   flex: 2;
@@ -45,4 +46,8 @@
   margin-right: $spacer * 0.5;
   background-color: $brand-secondary;
   font-weight: 700;
+}
+
+.how {
+  cursor: pointer;
 }

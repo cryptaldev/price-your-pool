@@ -5,7 +5,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
 }
 
@@ -18,7 +18,7 @@
 }
 
 .smartLabel {
-  flex: 1;
+  flex: 2;
 }
 .smartInput {
   flex: 2;
