@@ -26,3 +26,17 @@
   height: 100%;
   background-color: $brand-disabled;
 }
+
+.disclaimer {
+  padding: $spacer * 0.5;
+  width: 80%;
+  text-align: justify;
+  background-color: #000;
+  font-family: $font-family-base;
+  font-size: $font-size-root;
+  margin-bottom: $spacer;
+}
+
+.note {
+  color: $brand-secondary;
+}

@@ -61,14 +61,16 @@ function App() {
 
   function handleNetworkChanged(id) {
     setChainId(window.web3.utils.hexToNumber(id));
-    if (chainId == 1) {
+    console.log("ChainId - ", chainId);
+    if (window.web3.utils.hexToNumber(id) == 1) {
       setOceanAddress("0x967da4048cD07aB37855c090aAF366e4ce1b9F48");
-    } else if (chainId == 4) {
+      console.log(`Mainnet OCEAN address -`, oceanAddress);
+    } else if (window.web3.utils.hexToNumber(id) == 4) {
       setOceanAddress("0x8967bcf84170c91b0d24d4302c2376283b0b3a07");
+      console.log(`Rinkeby OCEAN address -`, oceanAddress);
     }
 
     console.log("Chain Id changed to - ", chainId);
-    console.log(`OCEAN address -`, oceanAddress);
   }
 
   function handleAccountsChanged(accounts) {
@@ -351,10 +353,16 @@ function App() {
       />
       <div className={styles.appContainer}>
         <Form>
-          <p>
-            Use this app only to "lower" the price of datatokens for a given
-            pool
-          </p>
+          <div className={styles.disclaimer}>
+            <p></p>
+            <span className={styles.note}> Note : </span> This project is in
+            beta. Understand the risks before use.
+            <p>
+              Use this app only to "lower" the price of datatokens for a given
+              pool
+            </p>
+          </div>
+
           <SmartInput
             label="Datatoken Address"
             value={datatokenAddress}
