@@ -14,6 +14,7 @@ import Modal from "./components/Modal";
 import styles from "./App.module.scss";
 
 function App() {
+  const [oceanAddress, setOceanAddress] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [tokensToMint, setTokensToMint] = useState(0);
   const [error, setError] = useState({});
@@ -60,7 +61,14 @@ function App() {
 
   function handleNetworkChanged(id) {
     setChainId(window.web3.utils.hexToNumber(id));
+    if (chainId == 1) {
+      setOceanAddress("0x967da4048cD07aB37855c090aAF366e4ce1b9F48");
+    } else if (chainId == 4) {
+      setOceanAddress("0x8967bcf84170c91b0d24d4302c2376283b0b3a07");
+    }
+
     console.log("Chain Id changed to - ", chainId);
+    console.log(`OCEAN address -`, oceanAddress);
   }
 
   function handleAccountsChanged(accounts) {
@@ -95,7 +103,7 @@ function App() {
   async function getPoolInfo(poolAddress, dtAddress) {
     const poolInstance = new window.web3.eth.Contract(poolABI, poolAddress);
     const oceanInWei = await poolInstance.methods
-      .getBalance(process.env.REACT_APP_OCEAN_ADDRESS)
+      .getBalance(oceanAddress)
       .call();
     const oceanInETH = window.web3.utils.fromWei(oceanInWei, "ether");
     const OCEAN = Number(oceanInETH).toFixed(2);
@@ -105,7 +113,7 @@ function App() {
     const datatokenInETH = window.web3.utils.fromWei(datatokenInWei, "ether");
     const Datatoken = Number(datatokenInETH).toFixed(2);
     const priceInWei = await poolInstance.methods
-      .getSpotPrice(process.env.REACT_APP_OCEAN_ADDRESS, dtAddress)
+      .getSpotPrice(oceanAddress, dtAddress)
       .call();
     const priceInETH = window.web3.utils.fromWei(priceInWei, "ether");
     const Price = Number(priceInETH).toFixed(2);
@@ -117,14 +125,14 @@ function App() {
     poolAddress,
     expectedSpotprice
   ) {
-    console.log("OCEAN address - ", process.env.REACT_APP_OCEAN_ADDRESS);
+    console.log("OCEAN address - ", oceanAddress);
     const poolInstance = new window.web3.eth.Contract(poolABI, poolAddress);
     let oceanInPoolInWei = await poolInstance.methods
-      .getBalance(process.env.REACT_APP_OCEAN_ADDRESS)
+      .getBalance(oceanAddress)
       .call();
     let oceanInPoolInETH = window.web3.utils.fromWei(oceanInPoolInWei, "ether");
     let weightOfOceanInWei = await poolInstance.methods
-      .getNormalizedWeight(process.env.REACT_APP_OCEAN_ADDRESS)
+      .getNormalizedWeight(oceanAddress)
       .call();
     let weightOfOceanInETH = window.web3.utils.fromWei(
       weightOfOceanInWei,
