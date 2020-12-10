@@ -10,22 +10,22 @@ import Header from "./components/Header";
 import dataTokenABI from "./abi/dataTokenABI";
 import poolABI from "./abi/poolABI";
 import { waitTransaction, isSuccessfulTransaction } from "./ethereum";
-import Modal from "./components/Modal"
+import Modal from "./components/Modal";
 import styles from "./App.module.scss";
 
 function App() {
-  const [showModal, setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(false);
   const [tokensToMint, setTokensToMint] = useState(0);
   const [error, setError] = useState({});
   const [datatokenInfo, setDatatokenInfo] = useState(null);
   const [poolInfo, setPoolInfo] = useState(null);
-  const [datatokenAddress, setDatatokenAddress] = useState(
-    ""
-  );
-  const [poolAddress, setPoolAddress] = useState(
-    ""
-  );
-  const [disabled, setDisabled] = useState({datatoken: false, pool: true, price: true})
+  const [datatokenAddress, setDatatokenAddress] = useState("");
+  const [poolAddress, setPoolAddress] = useState("");
+  const [disabled, setDisabled] = useState({
+    datatoken: false,
+    pool: true,
+    price: true
+  });
   const [expectedPrice, setExpectedPrice] = useState("");
   const [chainId, setChainId] = useState(0);
   const [account, setAccount] = useState(null);
@@ -166,7 +166,8 @@ function App() {
     const totalExpectedDatatokenBalance =
       swapFeeRatio * oceanTokenRatio * datatokenRatio;
 
-    const datatokensToMintInETH = totalExpectedDatatokenBalance - poolInfo.Datatoken
+    const datatokensToMintInETH =
+      totalExpectedDatatokenBalance - poolInfo.Datatoken;
     console.log("dt to mint - ", datatokensToMintInETH);
     setTokensToMint(datatokensToMintInETH);
     return datatokensToMintInETH;
@@ -273,8 +274,7 @@ function App() {
       let mintReceipt = await waitTransaction(window.web3, mintTxHash, null);
       console.log("mint Receipt - " + mintReceipt);
       if (isSuccessfulTransaction(mintReceipt)) {
-        alert("Mint tx successfully minted");   //hide loader
-
+        alert("Mint tx successfully minted"); //hide loader
       }
       //gulp minted tokens
       alert("Going to send gulp tx");
@@ -285,13 +285,10 @@ function App() {
       let gulpReceipt = await waitTransaction(window.web3, gulpTxHash, null);
       console.log("gulp Receipt - " + gulpReceipt);
       if (isSuccessfulTransaction(gulpReceipt)) {
-        alert("Gulp tx successfully minted");       
+        alert("Gulp tx successfully minted");
         setIsLoading(false);
         setPoolInfo(await getPoolInfo(poolAddress, datatokenAddress));
       }
-
-   
-
     } catch (err) {
       console.error(err.message);
     }
@@ -304,14 +301,13 @@ function App() {
       let info = await getDatatokenInfo(value);
       if (!info) {
         setError({ datatoken: "Datatoken not found" });
-      } else if (info.minter !== account){
-        console.error("You are not the minter")
-        setError({ datatoken: "You are not the minter"})
-      }
-      else {
+      } else if (info.minter !== account) {
+        console.error("You are not the minter");
+        setError({ datatoken: "You are not the minter" });
+      } else {
         setError({ datatoken: "" });
         setDatatokenInfo(info);
-        setDisabled({...disabled, pool: false})
+        setDisabled({ ...disabled, pool: false });
       }
     } else {
       setError({ datatoken: "Incorrect Datatoken address" });
@@ -321,38 +317,36 @@ function App() {
   async function handlePoolAddressChange(value) {
     setPoolAddress(value);
     if (window.web3.utils.isAddress(value)) {
-      let info = await getPoolInfo(value, datatokenAddress)
+      let info = await getPoolInfo(value, datatokenAddress);
       if (!info) {
         setError({ pool: "Pool not found" });
       } else {
         setError({ pool: "" });
         setPoolInfo(info);
-        setDisabled({...disabled, price: false})
+        setDisabled({ ...disabled, price: false });
       }
     } else {
       setError({ datatoken: "Incorrect Datatoken address" });
     }
-    
   }
 
-  function renderLoader(){
-    return (
-      <Loader
-        type="ThreeDots"
-        color="#00BFFF"
-        height={100}
-        width={100}
-      />
-    );
-
+  function renderLoader() {
+    return <Loader type="ThreeDots" color="#00BFFF" height={100} width={100} />;
   }
   return (
     <div className={styles.app}>
-      <Header account={account} modal={setShowModal}/>
-      <Modal className={styles.modal} open={showModal} setClose={() => setShowModal(false)}/>
+      <Header account={account} modal={setShowModal} />
+      <Modal
+        className={styles.modal}
+        open={showModal}
+        setClose={() => setShowModal(false)}
+      />
       <div className={styles.appContainer}>
         <Form>
-          <p>Set Expected Price to rebase the Pool</p>
+          <p>
+            Use this app only to "lower" the price of datatokens for a given
+            pool
+          </p>
           <SmartInput
             label="Datatoken Address"
             value={datatokenAddress}
@@ -380,8 +374,8 @@ function App() {
             disabled={disabled.price}
           />
           <br />
-          <Button onClick={handleSubmit}>Rebase Pool</Button>
-          {isLoading ?  renderLoader() : ""}
+          <Button onClick={handleSubmit}>Lower My Datatoken Price</Button>
+          {isLoading ? renderLoader() : ""}
         </Form>
       </div>
     </div>
