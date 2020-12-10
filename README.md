@@ -1,5 +1,6 @@
 # Price Your Pool
 
+> Here's the [live dapp](https://priceyourpool.xyz/)
 > Note - This project is in beta. Please understand the risks before use.
 
 This Dapp allows you to reset lower prices for datatokens that have inflated prices due to LPs staking OCEAN in the pool.
