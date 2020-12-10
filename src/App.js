@@ -43,6 +43,7 @@ function App() {
         setAccount(accounts[0]);
         //set chainId
         setChainId(window.web3.utils.hexToNumber(window.ethereum.chainId));
+        setOcean(window.ethereum.chainId);
 
         // event handler
         window.ethereum.on("accountsChanged", handleAccountsChanged);
@@ -62,14 +63,7 @@ function App() {
   function handleNetworkChanged(id) {
     setChainId(window.web3.utils.hexToNumber(id));
     console.log("ChainId - ", chainId);
-    if (window.web3.utils.hexToNumber(id) == 1) {
-      setOceanAddress("0x967da4048cD07aB37855c090aAF366e4ce1b9F48");
-      console.log(`Mainnet OCEAN address -`, oceanAddress);
-    } else if (window.web3.utils.hexToNumber(id) == 4) {
-      setOceanAddress("0x8967bcf84170c91b0d24d4302c2376283b0b3a07");
-      console.log(`Rinkeby OCEAN address -`, oceanAddress);
-    }
-
+    setOcean(id);
     console.log("Chain Id changed to - ", chainId);
   }
 
@@ -99,6 +93,16 @@ function App() {
     } catch (err) {
       console.error(err.message);
       return err;
+    }
+  }
+
+  function setOcean(chainId) {
+    if (window.web3.utils.hexToNumber(chainId) == 1) {
+      setOceanAddress("0x967da4048cD07aB37855c090aAF366e4ce1b9F48");
+      console.log(`Mainnet OCEAN address -`, oceanAddress);
+    } else if (window.web3.utils.hexToNumber(chainId) == 4) {
+      setOceanAddress("0x8967bcf84170c91b0d24d4302c2376283b0b3a07");
+      console.log(`Rinkeby OCEAN address -`, oceanAddress);
     }
   }
 
@@ -271,7 +275,7 @@ function App() {
         }
       }
       //mint datatokens
-      alert(`Going to mint ${tokensToMint}`);
+      alert(`Going to mint ${tokensToMint} datatokens. Please confirm tx.`);
       let mintTxHash = await mintDatatokens(
         datatokenAddress,
         poolAddress,
@@ -287,7 +291,7 @@ function App() {
         alert("Mint tx successfully minted"); //hide loader
       }
       //gulp minted tokens
-      alert("Going to send gulp tx");
+      alert(`Going to send gulp tx. Please confirm tx.`);
       let gulpTxHash = await gulpDatatokensIntoPool(
         datatokenAddress,
         poolAddress
@@ -295,9 +299,9 @@ function App() {
       let gulpReceipt = await waitTransaction(window.web3, gulpTxHash, null);
       console.log("gulp Receipt - " + gulpReceipt);
       if (isSuccessfulTransaction(gulpReceipt)) {
-        alert("Gulp tx successfully minted");
         setIsLoading(false);
         setPoolInfo(await getPoolInfo(poolAddress, datatokenAddress));
+        alert("Priced changed successfully..");
       }
     } catch (err) {
       console.error(err.message);
@@ -358,8 +362,8 @@ function App() {
             <span className={styles.note}> Note : </span> This project is in
             beta. Understand the risks before use.
             <p>
-              Use this app only to "lower" the price of datatokens for a given
-              pool
+              Use this app <span className={styles.note}>only to reduce</span>{" "}
+              the price of datatokens for a given pool
             </p>
           </div>
 
@@ -390,7 +394,7 @@ function App() {
             disabled={disabled.price}
           />
           <br />
-          <Button onClick={handleSubmit}>Lower My Datatoken Price</Button>
+          <Button onClick={handleSubmit}>Reduce My Datatoken Price</Button>
           {isLoading ? renderLoader() : ""}
         </Form>
       </div>
